@@ -6,9 +6,11 @@ interface UserDao
 {
 	val allUsers: Map<String, SendClient>
 
-	fun insertUser(username: String, client: SendClient): Boolean
+	fun insertUser(username: String, client: SendClient)
 
-	fun deleteUser(username: String): Boolean
+	fun deleteUser(username: String)
 
 	fun getUserByName(username: String): SendClient?
+
+	fun containsUser(username: String): Boolean
 }

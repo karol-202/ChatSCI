@@ -1,24 +1,34 @@
 package pl.karol202.chatsci.controller
 
+import pl.karol202.chatsci.actor.messaging.MessagingActor
+import pl.karol202.chatsci.model.ClientPacket
 import pl.karol202.chatsci.server.client.Client
 import pl.karol202.chatsci.server.client.thenClose
+import pl.karol202.chatsci.actor.sendAwait
+import pl.karol202.chatsci.model.ServerPacket
 
-private const val LOGIN_PREFIX = "NICK;"
-
-class ClientControllerImpl(private val client: Client) : ClientController
+class ClientControllerImpl(private val client: Client,
+                           private val messagingActor: MessagingActor) : ClientController
 {
 	override suspend fun run()
 	{
-		val username = extractUsername(client.receive()) ?: return client.thenClose().send("You have to log in first")
-		// Login
+		val username = auth(client.receive()) ?: return
 		runLogged(username)
 	}
 
-	private fun extractUsername(packet: String?) = when
+	private suspend fun auth(packet: ClientPacket?): String? = when(packet)
 	{
-		packet == null -> null
-		packet.startsWith(LOGIN_PREFIX, ignoreCase = true) -> packet.substringAfter(LOGIN_PREFIX)
-		else -> null
+		null -> null
+		is ClientPacket.Nick ->
+			messagingActor.sendAwait(MessagingActor.Action.Login(packet.username, client)) ?: auth(client.receive())
+		is ClientPacket.Malformed -> {
+			client.send(ServerPacket.Error(ServerPacket.Error.MALFORMED_PACKET))
+			auth(client.receive())
+		}
+		else -> {
+			client.send(ServerPacket.Error(ServerPacket.Error.NOT_LOGGED))
+			auth(client.receive())
+		}
 	}
 
 	private suspend fun runLogged(user: String) =
@@ -30,10 +40,12 @@ class ClientControllerImpl(private val client: Client) : ClientController
 		while(true) handlePacket(user, client.receive() ?: break)
 	}
 
-	private suspend fun handlePacket(user: String, packet: String) = Unit
-
-	private suspend fun ensureLoggedOut(user: String)
+	private suspend fun handlePacket(user: String, packet: ClientPacket) = when(packet)
 	{
-
+		is ClientPacket.Nick -> client.send(ServerPacket.Error(ServerPacket.Error.ALREADY_LOGGED))
+		is ClientPacket.Message -> messagingActor.send(MessagingActor.Action.Send(user, packet.recipient, packet.message))
+		is ClientPacket.Malformed -> client.send(ServerPacket.Error(ServerPacket.Error.MALFORMED_PACKET))
 	}
+
+	private suspend fun ensureLoggedOut(username: String) = messagingActor.send(MessagingActor.Action.Logout(username))
 }

@@ -1,6 +1,9 @@
 plugins {
     kotlin("jvm") version "1.3.61"
+    application
 }
+
+application.mainClassName = "pl.karol202.chatsci.MainKt"
 
 tasks {
     compileKotlin {

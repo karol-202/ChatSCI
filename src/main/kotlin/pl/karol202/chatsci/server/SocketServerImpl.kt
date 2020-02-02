@@ -8,21 +8,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import pl.karol202.chatsci.controller.ClientControllerFactory
-import pl.karol202.chatsci.provider.logger.LoggerProvider
-import pl.karol202.chatsci.provider.logger.logger
 import pl.karol202.chatsci.server.client.asClient
-import pl.karol202.chatsci.util.info
-import pl.karol202.chatsci.util.trace
-import pl.karol202.chatsci.util.warn
+import pl.karol202.chatsci.util.*
 
 private const val PORT = 16384
 
-class SocketServerImpl(loggerProvider: LoggerProvider,
-					   private val clientControllerFactory: ClientControllerFactory) : SocketServer,
-                                                                                       LoggerProvider by loggerProvider
+class SocketServerImpl(private val clientControllerFactory: ClientControllerFactory) : SocketServer
 {
-	private val logger by logger()
+	private val logger = LoggerFactory.getLogger(this::class.java)
 
 	override suspend fun run()
 	{
@@ -41,9 +36,9 @@ class SocketServerImpl(loggerProvider: LoggerProvider,
 	private fun CoroutineScope.handleClient(socket: Socket) = launch {
 		try
 		{
-			logger.trace("Client connected")
+			logger.info("Client connected")
 			socket.asClient().use { clientControllerFactory(it).run() }
-			logger.trace("Client disconnected")
+			logger.info("Client disconnected")
 		}
 		catch(t: Throwable)
 		{
