@@ -10,9 +10,12 @@ You can also open this project in any IDE with Gradle support
 
 ## API
 
-Communication over TCP, port 16384.
-Packet types (_NICK_, _MSG_, etc.) are case-insensitive.
-Nicks are case-sensitive.
+- Communication over TCP, port 16384.
+- Packet types (_NICK_, _MSG_, etc.) are case-insensitive.
+- Nicks are case-sensitive.
+- Nicks cannot contain semicolons, everything after semicolon
+(including semicolon itself) will be ignored or treated as next part of packet.
+The same applies to messages.
 
 ### Packets from client to server
 - `NICK;{nick}` - sets client's nick to {nick}.

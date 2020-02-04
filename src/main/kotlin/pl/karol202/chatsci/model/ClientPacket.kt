@@ -22,21 +22,26 @@ sealed class ClientPacket
 	object Malformed : ClientPacket()
 }
 
-fun String.parseClientPacket() = extractType(this)?.let { (type, rest) ->
-	when(type.toUpperCase())
+fun String.parseClientPacket(): ClientPacket
+{
+	val parts = split(';')
+	return when(parts[0].toUpperCase())
 	{
-		ClientPacket.Nick.PREFIX -> parseNick(rest)
-		ClientPacket.Message.PREFIX -> parseMessage(rest)
+		ClientPacket.Nick.PREFIX -> parseNick(parts)
+		ClientPacket.Message.PREFIX -> parseMessage(parts)
 		else -> null
-	}
-} ?: ClientPacket.Malformed
+	} ?: ClientPacket.Malformed
+}
 
-private fun extractType(packet: String) = packet.splitOnFirst(';')
+private fun parseNick(parts: List<String>): ClientPacket.Nick?
+{
+	val nick = parts.getOrNull(1) ?: return null
+	return ClientPacket.Nick(nick)
+}
 
-private fun parseNick(rest: String) = ClientPacket.Nick(rest)
-
-private fun parseMessage(rest: String) =
-		rest.splitOnFirst(';')?.let { (recipient, message) -> ClientPacket.Message(recipient, message) }
-
-private fun String.splitOnFirst(delimiter: Char) =
-		split(delimiter, limit = 2).takeIf { it.size == 2 }?.let { (first, second) -> first to second }
+private fun parseMessage(parts: List<String>): ClientPacket.Message?
+{
+	val recipient = parts.getOrNull(1) ?: return null
+	val message = parts.getOrNull(2) ?: return null
+	return ClientPacket.Message(recipient, message)
+}
