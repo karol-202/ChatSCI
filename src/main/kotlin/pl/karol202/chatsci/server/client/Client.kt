@@ -15,3 +15,5 @@ interface SendClient
 {
 	suspend fun send(packet: ServerPacket)
 }
+
+suspend fun SendClient.send(packets: List<ServerPacket>) = packets.forEach { send(it) }

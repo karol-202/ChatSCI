@@ -21,7 +21,8 @@ Sending and receiving messages will not be possible until nick is set.
 - `MSG;{recipient};{message}` - sends {message} to {recipient}
 
 ### Packets from server to client
-- `JOIN;{nick}` - informs that {nick} has joined
+- `JOIN;{nick}` - informs that {nick} has joined,
+or had already been connected before receiver of this package joined 
 - `LEAVE;{nick}` - informs that {nick} has left
 - `MSG;{sender};{message}` - informs that {sender} sent you {message}
 - `ERROR;{message}` - informs about wrong action,
